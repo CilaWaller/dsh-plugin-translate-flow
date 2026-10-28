@@ -1,0 +1,19 @@
+# Bundle patch for dsh-plugin-translate-flow.
+#
+# Inserts the plugin loader row. The row ships without `config`, so the panel
+# starts on the session's default agent model. Pick a model in the panel's own
+# pickers, or pin one durably by overriding this row in the profile's
+# cordis.patch.yml:
+#
+#   - id: translate-flow
+#     config:
+#       provider: <provider>
+#       model: <model>
+#       timeoutMs: 120000   # optional; 1s..10min, anything else is ignored
+#
+# `timeoutMs` is the per-module budget. The default is 300000 and is enforced
+# both by the abort signal and by a deadline in the host, so a provider that
+# ignores the signal is released rather than left holding the run.
+- insert:
+    - id: translate-flow
+      name: dsh-plugin-translate-flow

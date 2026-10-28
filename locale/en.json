@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Translation Flow",
+    "description": "A customizable, context-isolated translation flow: a visual node chain with draggable module cards, automatic input/output nodes, and strict per-module execution."
+  }
+}

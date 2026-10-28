@@ -1,0 +1,75 @@
+{
+  "name": "dsh-plugin-translate-flow",
+  "version": "0.2.0",
+  "description": "自定义翻译流程：高度可自定义的可视化翻译链路，包含中译英、英译中、学术中文润色、学术英文润色等模块，每步独立调用，严格隔离。",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "cordis",
+    "bundle",
+    "plugin",
+    "translation",
+    "flow",
+    "workflow",
+    "pipeline",
+    "visual"
+  ],
+  "author": "CilaWaller",
+  "license": "MIT",
+  "private": false,
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./typert": "./lib/typert.host.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "icon": "./icon.svg",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-api-gateway",
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-sidebar"
+      ]
+    }
+  },
+  "files": [
+    "lib/index.js",
+    "lib/typert.host.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "locale/en.json",
+    "locale/zh.json",
+    "icon.svg",
+    "README.md",
+    "README.zh.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node test/host.test.mjs && node test/manifest.test.mjs && node test/client.test.mjs",
+    "prepublishOnly": "npm test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CilaWaller/dsh-plugin-translate-flow.git"
+  },
+  "homepage": "https://github.com/CilaWaller/dsh-plugin-translate-flow#readme",
+  "bugs": {
+    "url": "https://github.com/CilaWaller/dsh-plugin-translate-flow/issues"
+  }
+}
