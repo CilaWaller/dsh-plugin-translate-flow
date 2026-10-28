@@ -2,12 +2,11 @@
 
 Isolated, customizable translation flow for DeepSeek Harness.
 
-The plugin exposes two pages:
+The plugin exposes one page:
 
 - **翻译流程 / Translation Flow** — input node, draggable module cards, an output
   node after every module, and sequential execution with progress highlighting.
-- **翻译模型配置 / Translation models** — the default model, every built-in
-  prompt, your custom modules, import/export, and the isolation notes.
+  Each module's prompt and model are edited in place, from that module's card.
 
 Built-in modules: 中译英, 英译中, 学术中文润色, 学术英文润色. The default mode is the
 precision chain:
@@ -18,6 +17,19 @@ EN input -> 英译中 -> 学术中文润色 -> 中译英
 
 Every module is a separate model call carrying only its own prompt and its own
 input; execution is strictly isolated.
+
+## Presets
+
+Two buttons in the page header replace the chain with a precision round trip:
+
+- **汉语精译 / Chinese precision** — `zh2en -> en-academic -> en2zh`
+- **英文精译 / English precision** — `en2zh -> zh-academic -> zh2en`
+
+Each one translates out of the source language, polishes in the target language
+and translates back, so what the polish did is visible. 英文精译 is also the chain
+a fresh panel starts from, and the chain the agent tool runs when `steps` is
+omitted. A preset is a starting point rather than a mode: the modules it places
+are ordinary modules, editable and removable like any other.
 
 ## English name
 
@@ -40,8 +52,9 @@ The isolation badges in the viewer are read off the object handed to
 
 Three tiers, in order:
 
-1. the module's own provider/model override;
-2. the loader row `config: { provider, model }`;
+1. the module's own provider/model override — editable on each module's card;
+2. the loader row `config: { provider, model }` — no panel control: set it in the
+   loader row if you want a durable default that is not the session's model;
 3. the session's default agent model.
 
 OpenCode-style providers requiring a per-conversation `x-opencode-session` header
@@ -96,8 +109,8 @@ dsh plugin --profile <name> add dsh-plugin-translate-flow
 For an application-owned profile (such as the Desktop one), install in-app with
 the plugin manager, passing the absolute package directory as the target.
 
-The pages then appear as the sidebar entries **翻译流程 / Translation Flow** and
-**翻译模型配置 / Translation models**, each addressing its own `main` panel.
+The page then appears as the sidebar entry **翻译流程 / Translation Flow**,
+addressing its own `main` panel.
 
 Host-half changes are cached by package name for the life of the process (both
 Node's ESM module cache and the Typert manifest cache), so replacing an installed
@@ -119,16 +132,16 @@ the agent itself.
 ## Verification
 
 ```
-node test/host.test.mjs      # 114 assertions
-node test/manifest.test.mjs  #  95 assertions
-node test/client.test.mjs    #  63 assertions
+node test/host.test.mjs      # 120 assertions
+node test/manifest.test.mjs  # 101 assertions
+node test/client.test.mjs    #  56 assertions
 ```
 
-272 assertions covering the isolation contract, the graph-repair edge cases a
-hand-edited or imported document can produce, the declared-shape check on the
-agent tool's own result, deadline and cancellation behaviour, the token-usage
-path, the identifiers shared by the three faces, and a one-pass render of both
-pages.
+277 assertions covering the isolation contract, the two presets and the flows
+they build, the graph-repair edge cases a hand-edited or imported document can
+produce, the declared-shape check on the agent tool's own result, deadline and
+cancellation behaviour, the token-usage path, the identifiers shared by the
+three faces, and a one-pass render of the page.
 
 ## Publishing checklist
 

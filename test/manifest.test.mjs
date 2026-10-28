@@ -185,6 +185,9 @@ for (const invocation of TYPERT.invocations) {
   ok(clientText.includes(`method: "${invocation.method}"`), `the client declares method "${invocation.method}"`)
   ok(clientText.includes(invocation.namespace), `the client declares namespace "${invocation.namespace}"`)
 }
+ok(clientText.includes('"汉语精译"') && clientText.includes('"英文精译"'), 'the client carries a fallback copy of both presets')
+ok(clientText.includes('flow: ["zh2en", "en-academic", "en2zh"]'), 'with the same Chinese round trip the host declares')
+ok(clientText.includes('flow: ["en2zh", "zh-academic", "zh2en"]'), 'and the same English round trip')
 ok(clientText.includes('sidebar.panellist'), 'the client registers a sidebar.panellist entry')
 ok(clientText.includes('name: "main"'), 'the client registers a main panel')
 
@@ -211,6 +214,22 @@ ok(runResultCodec.parse({ ...sampleResult, usage: null }) !== undefined, 'the ru
     threw = true
   }
   ok(threw, 'the run codec rejects a non-numeric token count')
+}
+const describeCodec = TYPERT.invocations.find((invocation) => invocation.method === 'describe').result.create()
+const emptyDescribe = { modules: [], precisionFlow: [], allowedRunKeys: [], limits: {} }
+ok(
+  describeCodec.parse({ ...emptyDescribe, presets: [{ id: 'zh', name: '汉语精译', flow: ['zh2en'] }] }) !== undefined,
+  'the describe codec accepts presets',
+)
+ok(describeCodec.parse(emptyDescribe) !== undefined, 'and still accepts a host that publishes none')
+{
+  let threw = false
+  try {
+    describeCodec.parse({ ...emptyDescribe, presets: [{ id: 'zh', name: '汉语精译', flow: 'zh2en' }] })
+  } catch {
+    threw = true
+  }
+  ok(threw, 'the describe codec rejects a preset whose flow is not an array')
 }
 const routesResultCodec = TYPERT.invocations.find((invocation) => invocation.method === 'listRoutes').result.create()
 ok(

@@ -8,13 +8,11 @@
  *
  * This suite loads the real client bundle from `lib/client.js` and runs `apply`
  * against a fake client context that records every slot registration. It asserts
- * that activation succeeds and that it registers exactly the four entries the
- * two pages need:
+ * that activation succeeds and that it registers exactly the two entries the
+ * page needs:
  *
  *   - `main`, keyed by `translate-flow`
  *   - `sidebar.panellist`, id `translate-flow`
- *   - `main`, keyed by `translate-flow-config`
- *   - `sidebar.panellist`, id `translate-flow-config`
  *
  * Run: node test/client.test.mjs
  */
@@ -114,6 +112,10 @@ function makeClientContext() {
             value: {
               modules: [{ id: 'en2zh', name: '英译中', from: 'English', to: 'Chinese', prompt: 'Translate into Chinese.' }],
               precisionFlow: ['en2zh', 'zh-academic', 'zh2en'],
+              presets: [
+                { id: 'zh', name: '汉语精译', nameEn: 'Chinese precision', flow: ['zh2en', 'en-academic', 'en2zh'] },
+                { id: 'en', name: '英文精译', nameEn: 'English precision', flow: ['en2zh', 'zh-academic', 'zh2en'] },
+              ],
               allowedRunKeys: ['runId', 'moduleId', 'prompt', 'input', 'provider', 'model'],
               limits: { maxInputChars: 200000, maxPromptChars: 20000, timeoutMs: 300000 },
             },
@@ -180,8 +182,6 @@ const mainPanels = ctx.registrations.filter((entry) => entry.name === 'main')
 const sideIcons = ctx.registrations.filter((entry) => entry.name === 'sidebar.panellist')
 const panel = mainPanels.find((entry) => entry.key === 'translate-flow')
 const icon = sideIcons.find((entry) => entry.id === 'translate-flow')
-const configPanel = mainPanels.find((entry) => entry.key === 'translate-flow-config')
-const configIcon = sideIcons.find((entry) => entry.id === 'translate-flow-config')
 ok(panel !== undefined, 'a main panel is registered')
 ok(icon !== undefined, 'a sidebar.panellist entry is registered')
 if (panel !== undefined) {
@@ -193,25 +193,10 @@ if (icon !== undefined) {
   eq(icon.order, 30, 'the sidebar entry declares its order')
   ok(typeof icon.label === 'function', 'the sidebar label is a locale-aware thunk')
 }
-ok(configPanel !== undefined, 'a second main panel is registered for configuration')
-if (configPanel !== undefined) {
-  eq(configPanel.key, 'translate-flow-config', 'the configuration panel uses its own key')
-  ok(typeof configPanel.component === 'function', 'the configuration panel is given a component function')
-}
-ok(configIcon !== undefined, 'a second sidebar entry is registered for configuration')
-if (configIcon !== undefined) {
-  eq(configIcon.id, 'translate-flow-config', 'the configuration entry uses its own id')
-  eq(configIcon.order, 31, 'the configuration entry sits after the flow entry')
-  ok(typeof configIcon.label === 'function', 'the configuration label is a locale-aware thunk')
-}
 const ids = ctx.registrations.map((entry) => (entry.key ?? entry.id))
-eq(
-  ids,
-  ['translate-flow', 'translate-flow', 'translate-flow-config', 'translate-flow-config'],
-  'each page and its sidebar entry share one id',
-)
+eq(ids, ['translate-flow', 'translate-flow'], 'the page and its sidebar entry share one id')
 const mounted = ctx.registrations.filter((entry) => entry.name === 'main' || entry.name === 'sidebar.panellist')
-eq(mounted.length, 4, 'exactly four slots are registered (two pages, two entries)')
+eq(mounted.length, 2, 'exactly two slots are registered (one page, one entry)')
 
 console.log('\nmodule/output pair is atomic')
 {
@@ -270,7 +255,8 @@ console.log('\npage render')
   await new Promise((resolve) => setTimeout(resolve, 0))
 
   const panels = renderCtx.registrations.filter((entry) => entry.name === 'main')
-  eq(panels.length, 2, 'both pages are registered as renderable main panels')
+  eq(panels.length, 1, 'the page is registered as a renderable main panel')
+  const rendered = []
   for (const registered of panels) {
     const text = []
     let failure = null
@@ -281,9 +267,12 @@ console.log('\npage render')
     }
     ok(failure === null, `the "${registered.key}" page renders without throwing${failure ? ` (${failure.message})` : ''}`)
     ok(text.length > 3, `the "${registered.key}" page renders content`)
+    rendered.push(...text)
   }
+  ok(rendered.includes('汉语精译'), 'the Chinese preset is offered in the header')
+  ok(rendered.includes('英文精译'), 'the English preset is offered too')
   disposeRender()
-  ok(renderCtx.disposed.length >= 5, `the render pass releases every registration (released ${renderCtx.disposed.length})`)
+  ok(renderCtx.disposed.length >= 3, `the render pass releases every registration (released ${renderCtx.disposed.length})`)
 }
 
 console.log('\nreader and editor invariants')
@@ -297,6 +286,10 @@ console.log('\nreader and editor invariants')
     'the custom-module cap is enforced on write as well as on read',
   )
   ok(source.includes('window.clearTimeout(copyTimer.current)'), 'the copy timer is cleared before it is replaced')
+  ok(
+    source.includes('"汉语精译"') && source.includes('"英文精译"'),
+    'the client carries a fallback copy of both presets for an older host half',
+  )
   ok(source.includes('"aria-live": "polite"'), 'run outcomes are announced to assistive technology')
   ok(source.includes('color-mix(in srgb, var(--dsw-alias-bg-base)'), 'the modal scrim uses a theme token, not a literal colour')
 }
@@ -376,12 +369,10 @@ console.log('\ngraph repair')
 
 console.log('\ndisposal')
 dispose()
-ok(ctx.disposed.length >= 5, `every registration is released (released ${ctx.disposed.length})`)
-ok(ctx.disposed.includes('translate-flow-config'), 'including the configuration page')
+ok(ctx.disposed.length >= 3, `every registration is released (released ${ctx.disposed.length})`)
 ok(
-  ctx.disposed.filter((entry) => entry === 'translate-flow').length === 2
-    && ctx.disposed.filter((entry) => entry === 'translate-flow-config').length === 2,
-  'each page key and its sidebar entry are both released',
+  ctx.disposed.filter((entry) => entry === 'translate-flow').length === 2,
+  'the page and its sidebar entry are both released',
 )
 
 console.log(`\n${checks - failures}/${checks} checks passed`)

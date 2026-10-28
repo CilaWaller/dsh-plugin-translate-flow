@@ -285,6 +285,18 @@ console.log('\ndescribe')
   eq(described.modules.map((m) => m.name), ['中译英', '英译中', '学术中文润色', '学术英文润色'], 'with their display names')
   ok(described.modules.every((m) => typeof m.prompt === 'string' && m.prompt.length > 20), 'every built-in module ships a prompt')
   eq(described.precisionFlow, ['en2zh', 'zh-academic', 'zh2en'], 'the default flow is the 精译 chain')
+  eq(described.presets.map((preset) => preset.id), ['zh', 'en'], 'both precision presets are declared, Chinese first')
+  eq(described.presets.map((preset) => preset.name), ['汉语精译', '英文精译'], 'with the names the header shows')
+  eq(described.presets[0].flow, ['zh2en', 'en-academic', 'en2zh'], '汉语精译 goes out to English, polishes, and comes back')
+  eq(described.presets[1].flow, ['en2zh', 'zh-academic', 'zh2en'], '英文精译 is the same round trip from English')
+  eq(described.presets[1].flow, described.precisionFlow, '英文精译 is the chain a fresh panel starts from')
+  {
+    const moduleIds = described.modules.map((module) => module.id)
+    ok(
+      described.presets.every((preset) => preset.flow.every((id) => moduleIds.includes(id))),
+      'every preset step names a declared module',
+    )
+  }
   eq(described.allowedRunKeys, ['runId', 'moduleId', 'prompt', 'input', 'provider', 'model'], 'the allowed request keys are published')
   eq(described.limits.maxInputChars, 200000, 'the input ceiling is published')
   eq(described.limits.maxTokens, 8192, 'the token ceiling is published')
